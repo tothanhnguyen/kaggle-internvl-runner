@@ -1,0 +1,72 @@
+experiment:
+  name: tnmammo-density-zero-shot
+  dataset_version: 1.0.0
+  seed: 42
+  mode: zero-shot
+  split: val
+
+dataset:
+  csv: data/val.csv
+  image_root: null  # Relative image paths resolve from the CSV directory when null.
+  case_id_column: case_id
+  label_column: label
+  view_columns:
+    - left_cc
+    - left_mlo
+    - right_cc
+    - right_mlo
+  views_per_case: 4
+  custom_preprocessing: false
+
+prompt:
+  file: common/prompt.txt
+
+generation:
+  do_sample: false
+  max_new_tokens: 4
+  num_beams: 1
+
+models:
+  qwen:
+    checkpoint: Qwen/Qwen2-VL-2B-Instruct
+    outputs:
+      predictions_csv: qwen/predictions.csv
+      raw_outputs_jsonl: qwen/raw_outputs.jsonl
+
+  llava:
+    checkpoint: xtuner/llava-phi-3-mini-hf
+    outputs:
+      predictions_csv: llava_phi3/predictions.csv
+      raw_outputs_jsonl: llava_phi3/raw_outputs.jsonl
+
+  internvl:
+    checkpoint: OpenGVLab/InternVL3_5-2B
+    revision: 7d7bd7bcc35b77b391883ebd7f9686cfa0e25cc0
+    trust_remote_code: true
+    device: auto
+    dtype: bfloat16
+    quantization: none
+    image_size: 448
+    max_num_patches_per_view: 4
+    use_thumbnail: true
+    image_placeholders:
+      - "Image-1: <image>"
+      - "Image-2: <image>"
+      - "Image-3: <image>"
+      - "Image-4: <image>"
+    outputs:
+      predictions_csv: internvl/predictions.csv
+      raw_outputs_jsonl: internvl/raw_outputs.jsonl
+
+output:
+  overwrite: false
+  invalid_label: INVALID
+
+evaluation:
+  metrics:
+    - accuracy
+    - macro_f1
+    - macro_precision
+    - macro_recall
+    - confusion_matrix
+  labels: [A, B, C, D]
