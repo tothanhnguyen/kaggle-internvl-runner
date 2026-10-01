@@ -27,14 +27,46 @@ generation:
   num_beams: 1
 
 models:
+  # Shared protocol above; model-native runtime and preprocessing below.
   qwen:
     checkpoint: Qwen/Qwen2-VL-2B-Instruct
+    revision: 895c3a49bc3fa70a340399125c650a463535e71c
+    trust_remote_code: false
+    device: auto
+    dtype: bfloat16
+    quantization: none
+    # AutoProcessor kwargs. Pilot budget, not the checkpoint's default range.
+    # Use processor.apply_chat_template with four ordered image items.
+    processor:
+      min_pixels: 200704   # 256 * 28 * 28 per view
+      max_pixels: 1003520  # 1280 * 28 * 28 per view
     outputs:
       predictions_csv: qwen/predictions.csv
       raw_outputs_jsonl: qwen/raw_outputs.jsonl
 
   llava:
     checkpoint: xtuner/llava-phi-3-mini-hf
+    revision: 218fa56e23d2b894dd13f2c4ecf4b90843b12b39
+    trust_remote_code: false
+    device: auto
+    dtype: float16
+    quantization: none
+    # AutoProcessor kwargs: native CLIP resize/crop and LLaVA token expansion.
+    processor:
+      do_resize: true
+      size:
+        shortest_edge: 336
+      do_center_crop: true
+      crop_size:
+        height: 336
+        width: 336
+      patch_size: 14
+      vision_feature_select_strategy: default
+      num_additional_image_tokens: 1  # CLIP adds CLS; "default" removes it.
+      image_token: "<image>"
+    # {images}: four image_token lines in view_columns order; {prompt}: shared text.
+    # Validate four-image inference on val; do not fall back to one view.
+    prompt_template: "<|user|>\n{images}\n{prompt}<|end|>\n<|assistant|>\n"
     outputs:
       predictions_csv: llava_phi3/predictions.csv
       raw_outputs_jsonl: llava_phi3/raw_outputs.jsonl
