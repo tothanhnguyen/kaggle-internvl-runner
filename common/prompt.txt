@@ -1,0 +1,9 @@
+Classify the breast density of this mammography case using the four views provided in this order: left CC, left MLO, right CC, right MLO.
+
+Categories:
+A: Almost entirely fatty.
+B: Scattered areas of fibroglandular density.
+C: Heterogeneously dense.
+D: Extremely dense.
+
+Return exactly one letter: A, B, C, or D.
